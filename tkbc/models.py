@@ -266,7 +266,7 @@ class TLT_KGE_Quaternion(TKBCModel):
         base = self.embeddings[5](torch.div(queries[:, 3], self.cycle, rounding_mode='floor'))
         comp_time = self.embeddings[4](queries[:, 3])  
         time = self.embeddings[2](queries[:, 3]) + base
-        time_ent = self.embeddings[3](queries[:, 3]) +base_ent
+        time_ent = self.embeddings[3](queries[:, 3]) + base_ent
         rel_ = self.complex_mul(rel, comp_time)
         rel_ = rel + rel_
         lhs_rel = self.quaternion_mul(torch.cat([lhs, time_ent], dim=1), torch.cat([rel_, time], dim=1))
@@ -316,12 +316,14 @@ class TLT_KGE_Complex(TKBCModel):
         comp_time = self.embeddings[5](x[:, 3])  
         rel_ = rel*comp_time 
         rel_ = rel + rel_
-        lhs_rel_1 = self.opt(lhs, rel_) - self.opt(time_ent, time)  +  (self.opt(lhs, time) + self.opt(time_ent, rel_)) 
-        lhs_rel_2 = -self.opt(lhs, rel_) + self.opt(time_ent, time)  +  (self.opt(lhs, time) + self.opt(time_ent, rel_)) 
+        # ----------------------------------------------------------------
+        lhs_rel_1 = self.opt(lhs, rel_) - self.opt(time_ent, time) + (self.opt(lhs, time) + self.opt(time_ent, rel_))
+        lhs_rel_2 = -self.opt(lhs, rel_) + self.opt(time_ent, time) + (self.opt(lhs, time) + self.opt(time_ent, rel_))
         return torch.sum(
-            lhs_rel_1*(rhs) + lhs_rel_2*(time_ent ),
+            lhs_rel_1*(rhs) + lhs_rel_2*(time_ent),
             1, keepdim=True
         )
+
     def opt(self, emb1, emb2):
         return emb1*emb2
     def forward(self, x):
@@ -376,7 +378,6 @@ class TLT_KGE_Complex(TKBCModel):
         return torch.cat((emb_re*rot_re + emb_im * rot_im, emb_im*rot_re - emb_re*rot_im), dim=-1)
 
     def get_queries(self, queries: torch.Tensor):
-
         lhs = self.embeddings[0](queries[:, 0])
         rel = self.embeddings[1](queries[:, 1])
         base_ent = self.embeddings[6](torch.div(queries[:, 3], self.cycle, rounding_mode='floor'))
